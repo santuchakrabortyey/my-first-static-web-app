@@ -1,41 +1,53 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sample HTML Page</title>
+    <title>Voice to PVA Bot (English)</title>
+    <script src="https://aka.ms/csspeech/jsbrowserpackageraw"></script>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 20px;
-        }
-        header {
-            background-color: #f8f9fa;
-            padding: 10px;
-            text-align: center;
-            border-bottom: 1px solid #ddd;
-        }
-        main {
-            margin-top: 20px;
-        }
-        ul {
-            list-style-type: square;
-        }
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        button { padding: 10px 20px; font-size: 16px; }
+        #recognizedText { margin-top: 20px; font-size: 18px; color: #333; }
+        iframe { margin-top: 30px; width: 100%; height: 600px; border: 1px solid #ccc; }
     </style>
 </head>
 <body>
-    <header>
-        <h1>Welcome to My Sample Page</h1>
-    </header>
-    <main>
-        <p>This is a simple HTML page to demonstrate basic structure and elements.</p>
-        <h2>Things I Like:</h2>
-        <ul>
-            <li>Reading books</li>
-            <li>Traveling</li>
-            <li>Cooking</li>
-            <li>Learning new things</li>
-        </ul>
-    </main>
+    <h2>Speak to Your Bot (English)</h2>
+    <button onclick="startListening()">Start Speaking</button>
+    <div id="recognizedText">Recognized speech will appear here...</div>
+
+    <!-- Embed your PVA bot here -->
+    <iframe src="https://copilotstudio.microsoft.com/environments/13abdf17-d81b-eefb-8bd1-f69c35265059/bots/crd04_ulMainRequestPocCbv1/webchat?__version__=2"
+        allow="microphone; autoplay" title="PVA Bot Chat"></iframe>
+
+    <script>
+        const speechKey = C95b2fdROAu6XTOj8ZIkJakh9blxR3ChCYAAtb4hUSdzQvLEemu1JQQJ99BCACHYHv6XJ3w3AAAYACOGRE6s;
+        const serviceRegion = eastus2; // e.g., eastus
+
+        function startListening() {
+            const speechConfig = SpeechSDK.SpeechConfig.fromSubscription(speechKey, serviceRegion);
+            speechConfig.speechRecognitionLanguage = "en-US";
+            const audioConfig = SpeechSDK.AudioConfig.fromDefaultMicrophoneInput();
+            const recognizer = new SpeechSDK.SpeechRecognizer(speechConfig, audioConfig);
+
+            recognizer.recognizeOnceAsync(result => {
+                const text = result.text;
+                document.getElementById("recognizedText").innerText = "You said: " + text;
+
+
+// Send to chatbot via iframe postMessage
+const botFrame = document.querySelector("iframe");
+botFrame.contentWindow.postMessage({
+    type: 'webchat/send',
+    payload: {
+        text: text
+    }
+}, '*');
+
+
+            });
+        }
+    </script>
 </body>
 </html>
