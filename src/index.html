@@ -27,7 +27,7 @@
 
         function startListening() {
             const speechConfig = SpeechSDK.SpeechConfig.fromSubscription(speechKey, serviceRegion);
-            speechConfig.speechRecognitionLanguage = "en-US";
+            speechConfig.speechRecognitionLanguage = "eastus2";
             const audioConfig = SpeechSDK.AudioConfig.fromDefaultMicrophoneInput();
             const recognizer = new SpeechSDK.SpeechRecognizer(speechConfig, audioConfig);
 
