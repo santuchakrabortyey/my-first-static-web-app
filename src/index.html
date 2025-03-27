@@ -2,52 +2,120 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Voice to PVA Bot (English)</title>
-    <script src="https://aka.ms/csspeech/jsbrowserpackageraw"></script>
-    <style>
-        body { font-family: Arial, sans-serif; padding: 20px; }
-        button { padding: 10px 20px; font-size: 16px; }
-        #recognizedText { margin-top: 20px; font-size: 18px; color: #333; }
-        iframe { margin-top: 30px; width: 100%; height: 600px; border: 1px solid #ccc; }
-    </style>
+  <meta charset="UTF-8">
+  <title>Voice to PVA Bot (Multilingual with Translation)</title>
+  <script src="https://aka.ms/csspeech/jsbrowserpackageraw"></script>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; }
+    h2 { color: #2c3e50; }
+    button { padding: 10px 20px; font-size: 16px; margin-top: 10px; }
+    label { margin-right: 15px; }
+    #recognizedText, #translatedText { margin-top: 20px; font-size: 14px; color: #333; }
+    iframe { margin-top: 30px; width: 100%; height: 600px; border: 1px solid #ccc; }
+  </style>
 </head>
-<body>
-    <h2>Speak to Your Bot (English)</h2>
-    <button onclick="startListening()">Start Speaking</button>
-    <div id="recognizedText">Recognized speech will appear here...</div>
+<body align='center'>
 
-    <!-- Embed your PVA bot here -->
-    <iframe src="https://copilotstudio.microsoft.com/environments/13abdf17-d81b-eefb-8bd1-f69c35265059/bots/crd04_ulMainRequestPocCbv1/webchat?__version__=2"
-        allow="microphone; autoplay" title="PVA Bot Chat"></iframe>
+  <h3>EY-UL OPERATOR HELP YOU BOT</h3>
 
-    <script>
-        const speechKey = C95b2fdROAu6XTOj8ZIkJakh9blxR3ChCYAAtb4hUSdzQvLEemu1JQQJ99BCACHYHv6XJ3w3AAAYACOGRE6s;
-        const serviceRegion = eastus2; // e.g., eastus
+  <div>
+    <strong>Select your language:</strong> 
+    <label><input type="checkbox" id="hindiCheckbox" onclick="handleLanguageSelect(this)"> Hindi</label>
+    <label><input type="checkbox" id="tamilCheckbox" onclick="handleLanguageSelect(this)"> Tamil</label> 
+    <label><input type="checkbox" id="engCheckbox"  onclick="handleLanguageSelect(this)"> English</label>
 
-        function startListening() {
-            const speechConfig = SpeechSDK.SpeechConfig.fromSubscription(speechKey, serviceRegion);
-            speechConfig.speechRecognitionLanguage = "eastus2";
-            const audioConfig = SpeechSDK.AudioConfig.fromDefaultMicrophoneInput();
-            const recognizer = new SpeechSDK.SpeechRecognizer(speechConfig, audioConfig);
+  </div>
 
-            recognizer.recognizeOnceAsync(result => {
-                const text = result.text;
-                document.getElementById("recognizedText").innerText = "You said: " + text;
+  <button onclick="startListening()">Start Speaking</button>
+  <div id="recognizedText">Recognized speech will appear here...</div>
+  <div id="translatedText">Translated English text will appear here if needed...</div>
+  <button id="sendButton" onclick="sendToBot()" disabled>Send to Bot</button>
 
+  <iframe id="pvabot"
+    src="https://copilotstudio.microsoft.com/environments/13abdf17-d81b-eefb-8bd1-f69c35265059/bots/crd04_ulMainRequestPocCbv1/webchat?__version__=2"
+    allow="microphone; autoplay"
+    title="PVA Bot Chat">
+  </iframe>
 
-// Send to chatbot via iframe postMessage
-const botFrame = document.querySelector("iframe");
-botFrame.contentWindow.postMessage({
-    type: 'webchat/send',
-    payload: {
-        text: text
+  <script>
+    let translatedText = '';
+    let selectedLanguage = '';
+
+function handleLanguageSelect(checkbox) {
+    // Uncheck all checkboxes
+    document.getElementById('hindiCheckbox').checked = false;
+    document.getElementById('tamilCheckbox').checked = false;
+    document.getElementById('engCheckbox').checked = false;
+
+    // Check the clicked checkbox
+    checkbox.checked = true;
+
+    // Assign the selected language based on the clicked checkbox
+    if (checkbox.id === 'hindiCheckbox') {
+        selectedLanguage = 'hi-IN';
+    } else if (checkbox.id === 'tamilCheckbox') {
+        selectedLanguage = 'ta-IN';
+    } else {
+        selectedLanguage = '';
     }
-}, '*');
+}
 
+    async function startListening() {
+      const speechKey = 'C95b2fdROAu6XTOj8ZIkJakh9blxR3ChCYAAtb4hUSdzQvLEemu1JQQJ99BCACHYHv6XJ3w3AAAYACOGRE6s';
+      const serviceRegion = 'eastus2';
 
-            });
+      const speechConfig = SpeechSDK.SpeechConfig.fromSubscription(speechKey, serviceRegion);
+      speechConfig.speechRecognitionLanguage = selectedLanguage || 'en-US';
+
+      const audioConfig = SpeechSDK.AudioConfig.fromDefaultMicrophoneInput();
+      const recognizer = new SpeechSDK.SpeechRecognizer(speechConfig, audioConfig);
+
+      recognizer.recognizeOnceAsync(async result => {
+        const recognized = result.text;
+        document.getElementById("recognizedText").innerText = "You said: " + recognized;
+
+        if (selectedLanguage) {
+          const translation = await translateToEnglish(recognized);
+          translatedText = translation;
+          document.getElementById("translatedText").innerText = "Translated to English: " + translatedText;
+        } else {
+          translatedText = recognized;
+          document.getElementById("translatedText").innerText = "(No translation needed)";
         }
-    </script>
+
+        document.getElementById("sendButton").disabled = false;
+      }, error => {
+        console.error("Error recognizing speech: ", error);
+        document.getElementById("recognizedText").innerText = "Error recognizing speech. Please try again.";
+      });
+    }
+
+    async function translateToEnglish(text) {
+      const response = await fetch("https://api.cognitive.microsofttranslator.com/translate?api-version=3.0&to=en", {
+        method: "POST",
+        headers: {
+          "Ocp-Apim-Subscription-Key": "AtXEYsmWgWeuhN691kierGRu2S5hg3axXOTRtagactpnrEchIMPQJQQJ99BCACHYHv6XJ3w3AAAbACOGcf5c",
+          "Ocp-Apim-Subscription-Region": "eastus2",
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify([{ Text: text }])
+      });
+      const data = await response.json();
+      return data[0].translations[0].text;
+    }
+
+    function sendToBot() {
+      if (!translatedText) return;
+
+      navigator.clipboard.writeText(translatedText).then(() => {
+        alert("Text copied to clipboard. Please click inside the chat window and press Ctrl+V to send.");
+        const botFrame = document.getElementById("pvabot");
+        botFrame.contentWindow.focus();
+      });
+
+      document.getElementById("sendButton").disabled = true;
+    }
+  </script>
+
 </body>
 </html>
